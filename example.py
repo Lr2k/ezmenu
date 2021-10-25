@@ -15,7 +15,7 @@ confirm_message = "決定しますか？"
 menu = Select_menu(
     titles=titles,
     position=0,
-    numbers=True,
+    numbers=False,
     consor=">"
 )
 
