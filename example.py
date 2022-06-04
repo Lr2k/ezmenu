@@ -1,4 +1,4 @@
-from OriginalMenu import Select_menu
+from ezmenu import SelectMenu
 import time
 
 titles = [
@@ -16,7 +16,7 @@ menu = Select_menu(
     titles=titles,
     position=0,
     numbers=False,
-    consor=">"
+    cursor=">"
 )
 
 index = menu.start(
@@ -29,5 +29,3 @@ index = menu.start(
 
 print(index)
 print(titles[index])
-
-time.sleep(10)

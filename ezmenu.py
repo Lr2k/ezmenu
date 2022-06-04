@@ -3,13 +3,13 @@ import copy
 import os
 
 
-class Select_menu:
+class SelectMenu:
 
     # titles:リスト型で選択肢を渡す
     # position=0:カーソルの初期位置を指定する。0は一番上、titlesの長さから1引いた値を渡すと一番下になる。
     # numbers=False:Trueにすると選択肢の頭に通し番号をつける。
     # curosr=">":カーソルとして使う文字を指定する。半角推奨。
-    def __init__(self, titles, position=0, numbers=False, consor=">"):
+    def __init__(self, titles, position=0, numbers=False, cursor=">"):
         self.titles = titles
         if numbers == True:
             self.titles_temp = [str(i) + " " + titles[i] for i in range(len(titles))]
