@@ -34,7 +34,7 @@ class SelectMenu(object):
         Falseを指定した場合、メッセージの下に選択肢を縦並びに表示する。
     '''
 
-    def __init__(self, choices, message=None, position=0, numbers=False, cursor='>', side_by_side=False, return_kinds='index'):
+    def __init__(self, choices=None, message=None, position=0, numbers=False, cursor='>', side_by_side=False, return_kinds='index'):
         '''
         Parameters
         choices : list or tuple.
@@ -69,7 +69,7 @@ class SelectMenu(object):
         self.side_by_side = side_by_side
         self.return_kinds = return_kinds
     
-    def start(self, message=None, return_kinds=None, side_by_side=None, position=None):
+    def start(self, choices=None, message=None, return_kinds=None, side_by_side=None, position=None):
         '''
         メニューを表示し、入力を待機する。
         選択肢が選ばれれば選択肢のindexもしくは選ばれた選択肢を返す。
@@ -89,6 +89,8 @@ class SelectMenu(object):
             カーソルの初期位置を指定する。
             指定がなければself.positionに従う。
         '''
+        if choices==None:
+            choices = self.choices
         if message==None:
             message = self.message
         if return_kinds==None:
