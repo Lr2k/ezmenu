@@ -34,7 +34,7 @@ class SelectMenu(object):
         Falseを指定した場合、メッセージの下に選択肢を縦並びに表示する。
     '''
 
-    def __init__(self, choices, message=None, position=0, numbers=False, cursor='>', side_by_side=False):
+    def __init__(self, choices, message=None, position=0, numbers=False, cursor='>', side_by_side=False, return_kinds='index'):
         '''
         Parameters
         choices : list or tuple.
@@ -46,6 +46,14 @@ class SelectMenu(object):
             Trueの場合、選択肢の先頭に通し番号をつける。
         cursor : str. Default is '>'
             カーソルとして用いる文字を指定する。半角推奨。
+        side_by_side : bool
+            Trueを指定した場合、メッセージの下に選択肢を横並びに表示する。
+            Falseを指定した場合、メッセージの下に選択肢を縦並びに表示する。
+        return_kinds : str. Default is 'index'
+            返り値に渡す内容そ指定する。
+            'index'を指定した場合は、選択肢のindexを返す。
+            'title'を指定した場合は、選択肢を返す。
+            'both'を指定した場合は、(<index>, <選択肢>)の形式で返す。
         '''
         self.message = message
         self.choices=choices
@@ -59,8 +67,9 @@ class SelectMenu(object):
         self.choice = None
         self.numbers = numbers
         self.side_by_side = side_by_side
+        self.return_kinds = return_kinds
     
-    def start(self, message=None, return_kinds="index", side_by_side=None):
+    def start(self, message=None, return_kinds=None, side_by_side=None, position=None):
         '''
         メニューを表示し、入力を待機する。
         選択肢が選ばれれば選択肢のindexもしくは選ばれた選択肢を返す。
@@ -70,17 +79,24 @@ class SelectMenu(object):
         message : str. Default is None.
             選択し上部に表示するメッセージ。
             省略可能。
-        return_kinds : str. Default is 'index'
+        return_kinds : str. Default is None
             返り値に渡す内容そ指定する。
+            指定がなければ、self.return_kindsの指定に従う。
             'index'を指定した場合は、選択肢のindexを返す。
             'title'を指定した場合は、選択肢を返す。
             'both'を指定した場合は、(<index>, <選択肢>)の形式で返す。
+        position : int. Default is None.
+            カーソルの初期位置を指定する。
+            指定がなければself.positionに従う。
         '''
         if message==None:
             message = self.message
-        
+        if return_kinds==None:
+            return_kinds = self.return_kinds
         if side_by_side==None:
             side_by_side = self.side_by_side
+        if position!=None:
+            self.position = position
         
         os.system('cls')
         self.confirmed = False
