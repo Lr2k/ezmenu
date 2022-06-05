@@ -3,84 +3,142 @@ import copy
 import os
 
 
-class SelectMenu:
-
-    # titles:リスト型で選択肢を渡す
-    # position=0:カーソルの初期位置を指定する。0は一番上、titlesの長さから1引いた値を渡すと一番下になる。
-    # numbers=False:Trueにすると選択肢の頭に通し番号をつける。
-    # curosr=">":カーソルとして使う文字を指定する。半角推奨。
-    def __init__(self, titles, position=0, numbers=False, cursor=">"):
-        self.titles = titles
-        if numbers == True:
-            self.titles_temp = [str(i) + " " + titles[i] for i in range(len(titles))]
-        else:
-            self.titles_temp = copy.copy(titles)
-
-        self.consor = consor
-        self.position = self.fix_position(position)
-        self.selection = None
-        self.numbers = numbers
+class SelectMenu(object):
+    '''
+    複数の選択肢を提示し、矢印キーの入力を受けカーソルを動かす。
+    エンターで選択肢を確定すると返り値として、選択肢のindexもしくは選択した選択肢を返す。
     
+    Atributes
+    ---------
+    message : str. Default is None.
+        選択肢の上部に表示するメッセージを指定する。
+    choices : list or tuple.
+        選択肢を指定する。配列の先頭から順に表示される。
+    choices_tmp : list.
+        choicesをもとに、numbersの指定に応じて各選択肢の先頭に通しの番号を結合したもの。
+    position : int
+        カーソルの初期位置を指定する。
+        0から始まり、0は一番上部に位置する選択肢を示す。
+    numbers : bool
+        Trueの場合、選択肢の先頭に通し番号をつける。
+    cursor : str
+        カーソルとして用いる文字を指定する。半角推奨。
+    choice : int
+        選択した選択肢のindex。
+    confirmed : bool
+        選択が確定した状態であるかを示す。
+        Trueが指定された状態になると、startメソッドでreconfirm=Trueが指定されていない限り
+        キー入力の待機が終了し、選択が確定したことになる。
+    side_by_side : bool
+        Trueを指定した場合、メッセージの下に選択肢を横並びに表示する。
+        Falseを指定した場合、メッセージの下に選択肢を縦並びに表示する。
+    '''
 
-    # キー入力の制御
-    # message=None:選択画面上部に質問として表示するメッセージ
-    # confirm_message=None:選択後の確認画面で表示するメッセージ
-    # confirm_yes="Yes":選択後の確認画面で承認を意味する選択肢を指定する
-    # confirm_no="No": 選択後の確認画面で否定を意味する選択肢を指定する
-    # reply="title":戻り値の形式を指定する。titleを選択すると選択肢が返る。indexを選択するとindexが返る。
-    def start(self, message=None, confirm_message=None, confirm_yes="Yes", confirm_no="No", reply="title"):
-        # self.confirm...確認画面でYesを選択するとFalseになる。
-        # 
+    def __init__(self, choices, message=None, position=0, numbers=False, cursor='>', side_by_side=False):
+        '''
+        Parameters
+        choices : list or tuple.
+            選択肢を指定する。配列の先頭から順に表示される。
+        position : int. Default is 0.
+            カーソルの初期位置を指定する。
+            0から始まり、0は一番上部に位置する選択肢を示す。
+        numbers : bool. Default is False.
+            Trueの場合、選択肢の先頭に通し番号をつける。
+        cursor : str. Default is '>'
+            カーソルとして用いる文字を指定する。半角推奨。
+        '''
+        self.message = message
+        self.choices=choices
+        if numbers == True:
+            self.choices_temp = [str(i) + " " + choices[i] for i in range(len(choices))]
+        else:
+            self.choices_temp = copy.copy(choices)
+
+        self.cursor = cursor
+        self.position = self.fix_position(position)
+        self.choice = None
+        self.numbers = numbers
+        self.side_by_side = side_by_side
+    
+    def start(self, message=None, return_value="index", side_by_side=None):
+        '''
+        メニューを表示し、入力を待機する。
+        選択肢が選ばれれば選択肢のindexもしくは選ばれた選択肢を返す。
+        
+        Parameters
+        ----------
+        message : str. Default is None.
+            選択し上部に表示するメッセージ。
+            省略可能。
+        return_value : str. Default is 'index'
+            返り値に渡す内容そ指定する。
+            'index'を指定した場合は、選択肢のindexを返す。
+            'title'を指定した場合は、選択肢を返す。
+            'both'を指定した場合は、(<index>, <選択肢>)の形式で返す。
+        '''
+        if message==None:
+            message = self.message
+        
+        if side_by_side==None:
+            side_by_side = self.side_by_side
         
         os.system('cls')
-        self.confirm = True
+        self.confirmed = False
 
-        while self.confirm:
+        while not self.confirmed:
 
-            self.display(message)
+            self.display(message, side_by_side)
             with keyboard.Listener(on_press=self.press) as listener:
                 listener.join()
-            
-            if self.selection != None:
-                os.system('cls')
-                self.confirmation(confirm_message, confirm_yes, confirm_no)
-
-                if self.confirm == True:
-                    self.selection = None
-            
             os.system('cls')
-        
+       
         out = None
-        if reply == "title":
-            out = self.titles[self.position]
-        elif reply == "index":
-            out = self.position
+        if return_value == "title":
+            out = self.choices[self.choice]
+        elif return_value == "index":
+            out = self.choice
+        elif return_value == "both":
+            out = (self.choice, self.choices[self.choice])
+        else:
+            pass
 
         return out
 
 
-    # 選択肢を表示する
-    def display(self, message):
+    def display(self, message=None, side_by_side=None):
+        '''選択肢をメッセージの下に表示する。'''
+
+        if message==None:
+            message=self.message
+        if side_by_side==None:
+            side_by_side=self.side_by_side
         
         if message != None:
             print(message)
 
-        for i in range(len(self.titles_temp)):
-            if i == self.position:      #カーソルを合わせる選択肢
-                print(self.consor + " " + self.titles_temp[i])
-            else:
-                print("  " + self.titles_temp[i])
-        
+        if side_by_side:
+            for i in range(len(self.choices_temp)):
+                if i == self.position:      #カーソルを合わせる選択肢
+                    print('  ' + self.cursor + ' ' + self.choices_temp[i], end='')
+                else:
+                    print("    " + self.choices_temp[i], end='')
+            print()
+        else:
+            for i in range(len(self.choices_temp)):
+                if i == self.position:      #カーソルを合わせる選択肢
+                    print(self.cursor + " " + self.choices_temp[i])
+                else:
+                    print("  " + self.choices_temp[i])
+
+
     # カーソルの位置を制限する
     def fix_position(self, position):
         while True:
-            num = len(self.titles)
+            num = len(self.choices)
             if position < 0:
                 position += num
-            
             elif position >= num:
                 position -=num
-
             else:
                 break
 
@@ -98,9 +156,9 @@ class SelectMenu:
             
             # self.confirm...True:No False:Yes
             if self.confirm == True:
-                print("   " + Yes + "    " + self.consor + " " + No)
+                print("   " + Yes + "    " + self.cursor + " " + No)
             else:
-                print(" " + self.consor + " " + Yes + "    " + "  " + No)
+                print(" " + self.cursor + " " + Yes + "    " + "  " + No)
 
             with keyboard.Listener(on_press=self.press_confirm) as listener:
                 listener.join()
@@ -109,28 +167,41 @@ class SelectMenu:
 
 
     def press(self, key):
+        '''
+        メニュー選択でのキー入力に対する動作の指定
+        
+        Parameter
+        ---------
+        key : keyboard.Key
+            入力され得たkeyを指定するpynpt.keyboard.Keyオブジェクト。
+        '''
         if key == keyboard.Key.up:
             self.position = self.fix_position(self.position - 1)
+            self.confirmed = False
             return False
         
         elif key == keyboard.Key.down:
             self.position = self.fix_position(self.position + 1)
+            self.confirmed = False
             return False
         
         elif key == keyboard.Key.left:
             self.position = 0
+            self.cofirmed = False
             return False
 
         elif key == keyboard.Key.right:
-            self.position = len(self.titles) - 1
+            self.position = len(self.choices) - 1
+            self.confirmed = False
             return False
 
         elif key == keyboard.Key.enter:
-            self.selection = self.titles[self.position]
-            return False
-        
+            self.choice = self.position
+            self.confirmed = True
+            return False        
         else:
             pass
+
     def press_confirm(self, key):
         if (key == keyboard.Key.right) or (key == keyboard.Key.left):
             self.confirm = not self.confirm     # bool値反転

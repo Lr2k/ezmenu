@@ -1,7 +1,7 @@
 from ezmenu import SelectMenu
 import time
 
-titles = [
+choices = [
     "獅白ぼたん",
     "猫又おかゆ",
     "犬神ころね",
@@ -10,22 +10,14 @@ titles = [
 ]
 
 message = "推しを選択してください。"
-confirm_message = "決定しますか？"
 
-menu = Select_menu(
-    titles=titles,
-    position=0,
-    numbers=False,
-    cursor=">"
-)
+menu = SelectMenu(choices, cursor=">", message=message)
 
-index = menu.start(
-    message=message,
-    confirm_message=confirm_message,
-    confirm_yes="はい",
-    confirm_no="いいえ",
-    reply="index"
-)
+index = menu.start()
 
-print(index)
-print(titles[index])
+reconfirm_choices = ["Yes", "No"]
+reconfirm_message = choices[index] + "でよろしいですか？"
+
+reconfirm = SelectMenu(choices=reconfirm_choices, message=reconfirm_message, side_by_side=True)
+
+print(reconfirm.start())
