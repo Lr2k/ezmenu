@@ -60,7 +60,7 @@ class SelectMenu(object):
         self.numbers = numbers
         self.side_by_side = side_by_side
     
-    def start(self, message=None, return_value="index", side_by_side=None):
+    def start(self, message=None, return_kinds="index", side_by_side=None):
         '''
         メニューを表示し、入力を待機する。
         選択肢が選ばれれば選択肢のindexもしくは選ばれた選択肢を返す。
@@ -70,7 +70,7 @@ class SelectMenu(object):
         message : str. Default is None.
             選択し上部に表示するメッセージ。
             省略可能。
-        return_value : str. Default is 'index'
+        return_kinds : str. Default is 'index'
             返り値に渡す内容そ指定する。
             'index'を指定した場合は、選択肢のindexを返す。
             'title'を指定した場合は、選択肢を返す。
@@ -84,20 +84,19 @@ class SelectMenu(object):
         
         os.system('cls')
         self.confirmed = False
-
         while not self.confirmed:
-
             self.display(message, side_by_side)
             with keyboard.Listener(on_press=self.press) as listener:
                 listener.join()
+
             os.system('cls')
        
         out = None
-        if return_value == "title":
+        if return_kinds == "title":
             out = self.choices[self.choice]
-        elif return_value == "index":
+        elif return_kinds == "index":
             out = self.choice
-        elif return_value == "both":
+        elif return_kinds == "both":
             out = (self.choice, self.choices[self.choice])
         else:
             pass
