@@ -153,6 +153,7 @@ class SelectMenu(object):
                     print('  ' + self.cursor + ' ' + self.choices_temp[i], end='')
                 else:
                     print("    " + self.choices_temp[i], end='')
+            print()
         else:
             for i in range(len(self.choices_temp)):
                 if i == self.position:      #カーソルを合わせる選択肢
