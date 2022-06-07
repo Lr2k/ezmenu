@@ -10,10 +10,12 @@ class SelectMenu(object):
     
     Atributes
     ---------
-    message : str. Default is None.
+    message : str.
         選択肢の上部に表示するメッセージを指定する。
     choices : list or tuple.
         選択肢を指定する。配列の先頭から順に表示される。
+    bottom_message : str.
+        選択肢の下部に表示するメッセージを指定する。
     choices_tmp : list.
         choicesをもとに、numbersの指定に応じて各選択肢の先頭に通しの番号を結合したもの。
     position : int
@@ -34,7 +36,7 @@ class SelectMenu(object):
         Falseを指定した場合、メッセージの下に選択肢を縦並びに表示する。
     '''
 
-    def __init__(self, choices=None, message=None, position=0, numbers=False, cursor='>', side_by_side=False, return_kinds='index'):
+    def __init__(self, choices=None, message=None, bottom_message=None, position=0, numbers=False, cursor='>', side_by_side=False, return_kinds='index'):
         '''
         Parameters
         choices : list or tuple.
@@ -42,6 +44,8 @@ class SelectMenu(object):
         position : int. Default is 0.
             カーソルの初期位置を指定する。
             0から始まり、0は一番上部に位置する選択肢を示す。
+        bottom_message : str. Default is None.
+            選択肢の下部に表示するメッセージを指定する。
         numbers : bool. Default is False.
             Trueの場合、選択肢の先頭に通し番号をつける。
         cursor : str. Default is '>'
@@ -56,20 +60,20 @@ class SelectMenu(object):
             'both'を指定した場合は、(<index>, <選択肢>)の形式で返す。
         '''
         self.message = message
-        self.choices=choices
-        if numbers == True:
-            self.choices_temp = [str(i) + " " + choices[i] for i in range(len(choices))]
-        else:
-            self.choices_temp = copy.copy(choices)
-
+        self.choices = choices if choices is not None else list()
+        self.bottom_message = bottom_message
+        self.choices_tmp = None
+        print('in init')
         self.cursor = cursor
         self.position = self.fix_position(position)
         self.choice = None
         self.numbers = numbers
         self.side_by_side = side_by_side
         self.return_kinds = return_kinds
+
+        print('end init')
     
-    def start(self, choices=None, message=None, return_kinds=None, side_by_side=None, position=None):
+    def start(self, choices=None, message=None, bottom_message=None, return_kinds=None, side_by_side=None, position=None, numbers=None):
         '''
         メニューを表示し、入力を待機する。
         選択肢が選ばれれば選択肢のindexもしくは選ばれた選択肢を返す。
@@ -79,6 +83,8 @@ class SelectMenu(object):
         message : str. Default is None.
             選択し上部に表示するメッセージ。
             省略可能。
+        bottom_message : str. Default is None.
+            選択肢の下部に表示するメッセージを指定する。
         return_kinds : str. Default is None
             返り値に渡す内容そ指定する。
             指定がなければ、self.return_kindsの指定に従う。
@@ -89,26 +95,35 @@ class SelectMenu(object):
             カーソルの初期位置を指定する。
             指定がなければself.positionに従う。
         '''
-        if choices==None:
+        if choices is None:
             choices = self.choices
-        if message==None:
+        if message is None:
             message = self.message
-        if return_kinds==None:
+        if bottom_message is None:
+            bottom_message = self.bottom_message
+        if return_kinds is None:
             return_kinds = self.return_kinds
-        if side_by_side==None:
+        if side_by_side is None:
             side_by_side = self.side_by_side
-        if position!=None:
+        if position is not None:
             self.position = position
+        if numbers is None:
+            numbers = self.numbers
+        
+        if numbers == True:
+            self.choices_temp = [str(i) + " " + choices[i] for i in range(len(choices))]
+        else:
+            self.choices_temp = copy.copy(choices)
         
         os.system('cls')
         self.confirmed = False
         while not self.confirmed:
-            self.display(message, side_by_side)
+            self.display(message, side_by_side, bottom_message)
             with keyboard.Listener(on_press=self.press) as listener:
                 listener.join()
 
             os.system('cls')
-       
+        
         out = None
         if return_kinds == "title":
             out = self.choices[self.choice]
@@ -122,15 +137,17 @@ class SelectMenu(object):
         return out
 
 
-    def display(self, message=None, side_by_side=None):
+    def display(self, message=None, side_by_side=None, bottom_message=None):
         '''選択肢をメッセージの下に表示する。'''
 
-        if message==None:
+        if message is None:
             message=self.message
-        if side_by_side==None:
+        if side_by_side is None:
             side_by_side=self.side_by_side
+        if bottom_message is None:
+            bottom_message = self.bottom_message
         
-        if message != None:
+        if message is not None:
             print(message)
 
         if side_by_side:
@@ -146,13 +163,18 @@ class SelectMenu(object):
                     print(self.cursor + " " + self.choices_temp[i])
                 else:
                     print("  " + self.choices_temp[i])
+        
+        if bottom_message is not None:
+            print(bottom_message)
 
 
     # カーソルの位置を制限する
     def fix_position(self, position):
         while True:
             num = len(self.choices)
-            if position < 0:
+            if num==0:
+                break
+            elif position < 0:
                 position += num
             elif position >= num:
                 position -=num
@@ -167,7 +189,7 @@ class SelectMenu(object):
         self.confirm_conf = True
         while self.confirm_conf:
             
-            if confirm_message != None:
+            if confirm_message is not None:
                 print(confirm_message + " : ", end="")
             print(self.selection)
             
@@ -215,6 +237,10 @@ class SelectMenu(object):
         elif key == keyboard.Key.enter:
             self.choice = self.position
             self.confirmed = True
+            
+            # SelectMenu表示後、input()で入力を受けようとするとエンターが入力されてしまうため 
+            input()
+            
             return False        
         else:
             pass
