@@ -63,15 +63,12 @@ class SelectMenu(object):
         self.choices = choices if choices is not None else list()
         self.bottom_message = bottom_message
         self.choices_tmp = None
-        print('in init')
         self.cursor = cursor
         self.position = self.fix_position(position)
         self.choice = None
         self.numbers = numbers
         self.side_by_side = side_by_side
         self.return_kinds = return_kinds
-
-        print('end init')
     
     def start(self, choices=None, message=None, bottom_message=None, return_kinds=None, side_by_side=None, position=None, numbers=None):
         '''
@@ -156,7 +153,6 @@ class SelectMenu(object):
                     print('  ' + self.cursor + ' ' + self.choices_temp[i], end='')
                 else:
                     print("    " + self.choices_temp[i], end='')
-            print()
         else:
             for i in range(len(self.choices_temp)):
                 if i == self.position:      #カーソルを合わせる選択肢
@@ -237,10 +233,8 @@ class SelectMenu(object):
         elif key == keyboard.Key.enter:
             self.choice = self.position
             self.confirmed = True
-            
             # SelectMenu表示後、input()で入力を受けようとするとエンターが入力されてしまうため 
             input()
-            
             return False        
         else:
             pass
