@@ -62,12 +62,13 @@ class SelectMenu(object):
         self.message = message
         self.choices = choices if choices is not None else list()
         self.bottom_message = bottom_message
-        self.choices_tmp = None
+        self.choices_tmp = list()
         self.cursor = cursor
         self.position = self.fix_position(position)
         self.choice = None
         self.numbers = numbers
         self.side_by_side = side_by_side
+        self.sbs_tmp = side_by_side # pressメソッドに引数を渡せないため、self.side_by_sideを変更せずに共有する
         self.return_kinds = return_kinds
     
     def start(self, choices=None, message=None, bottom_message=None, return_kinds=None, side_by_side=None, position=None, numbers=None):
@@ -102,18 +103,20 @@ class SelectMenu(object):
             return_kinds = self.return_kinds
         if side_by_side is None:
             side_by_side = self.side_by_side
+        self.sbs_tmp = side_by_side
         if position is not None:
             self.position = position
         if numbers is None:
             numbers = self.numbers
         
         if numbers == True:
-            self.choices_temp = [str(i) + " " + choices[i] for i in range(len(choices))]
+            self.choices_tmp = [str(i) + " " + choices[i] for i in range(len(choices))]
         else:
-            self.choices_temp = copy.copy(choices)
+            self.choices_tmp = copy.copy(choices)
         
         os.system('cls')
         self.confirmed = False
+        self.sbs_temp = side_by_side
         while not self.confirmed:
             self.display(message, side_by_side, bottom_message)
             with keyboard.Listener(on_press=self.press) as listener:
@@ -148,58 +151,48 @@ class SelectMenu(object):
             print(message)
 
         if side_by_side:
-            for i in range(len(self.choices_temp)):
+            for i in range(len(self.choices_tmp)):
                 if i == self.position:      #カーソルを合わせる選択肢
-                    print('  ' + self.cursor + ' ' + self.choices_temp[i], end='')
+                    print('  ' + self.cursor + ' ' + self.choices_tmp[i], end='')
                 else:
-                    print("    " + self.choices_temp[i], end='')
+                    print("    " + self.choices_tmp[i], end='')
             print()
         else:
-            for i in range(len(self.choices_temp)):
+            for i in range(len(self.choices_tmp)):
                 if i == self.position:      #カーソルを合わせる選択肢
-                    print(self.cursor + " " + self.choices_temp[i])
+                    print(self.cursor + " " + self.choices_tmp[i])
                 else:
-                    print("  " + self.choices_temp[i])
+                    print("  " + self.choices_tmp[i])
         
         if bottom_message is not None:
             print(bottom_message)
 
 
-    # カーソルの位置を制限する
     def fix_position(self, position):
-        while True:
-            num = len(self.choices)
-            if num==0:
-                break
-            elif position < 0:
-                position += num
-            elif position >= num:
-                position -=num
-            else:
-                break
+        '''
+        カーソルの位置を選択しのある範囲に収める
 
-        return position   
+        Parameters
+        ----------
+        position : int
+            現在のカーソルの位置
+        
+        Return
+        ------
+        position : int
+            修正後のカーソルの位置
+        '''
+        num = len(self.choices_tmp)
+        if num==0:
+            pass
+        elif position < 0:
+            position = 0
+        elif position >= num:
+            position = num - 1
+        else:
+            pass
 
-    # 選択を確定するか確認する
-    def confirmation(self, confirm_message, Yes, No):
-
-        self.confirm_conf = True
-        while self.confirm_conf:
-            
-            if confirm_message is not None:
-                print(confirm_message + " : ", end="")
-            print(self.selection)
-            
-            # self.confirm...True:No False:Yes
-            if self.confirm == True:
-                print("   " + Yes + "    " + self.cursor + " " + No)
-            else:
-                print(" " + self.cursor + " " + Yes + "    " + "  " + No)
-
-            with keyboard.Listener(on_press=self.press_confirm) as listener:
-                listener.join()
-            
-            os.system('cls')
+        return position
 
 
     def press(self, key):
@@ -211,34 +204,76 @@ class SelectMenu(object):
         key : keyboard.Key
             入力され得たkeyを指定するpynpt.keyboard.Keyオブジェクト。
         '''
-        if key == keyboard.Key.up:
-            self.position = self.fix_position(self.position - 1)
-            self.confirmed = False
-            return False
-        
-        elif key == keyboard.Key.down:
-            self.position = self.fix_position(self.position + 1)
-            self.confirmed = False
-            return False
-        
-        elif key == keyboard.Key.left:
-            self.position = 0
-            self.cofirmed = False
-            return False
+        if self.sbs_tmp:
+            if key == keyboard.Key.left:
+                # 一つ前の選択肢へ
+                self.position = self.fix_position(self.position - 1)
+                self.confirmed = False
+                return False
+            
+            elif key == keyboard.Key.right:
+                # 次の選択肢へ
+                self.position = self.fix_position(self.position + 1)
+                self.confirmed = False
+                return False
+            
+            elif key == keyboard.Key.up:
+                # 最初の選択肢へ
+                self.position = 0
+                self.cofirmed = False
+                return False
 
-        elif key == keyboard.Key.right:
-            self.position = len(self.choices) - 1
-            self.confirmed = False
-            return False
+            elif key == keyboard.Key.down:
+                # 最後の選択肢へ
+                self.position = len(self.choices_tmp) - 1
+                self.confirmed = False
+                return False
 
-        elif key == keyboard.Key.enter:
-            self.choice = self.position
-            self.confirmed = True
-            # SelectMenu表示後、input()で入力を受けようとするとエンターが入力されてしまうため 
-            input()
-            return False        
+            elif key == keyboard.Key.enter:
+                # 確定
+                self.choice = self.position
+                self.confirmed = True
+                # SelectMenu表示後、input()で入力を受けようとするとエンターが入力されてしまうため 
+                input()
+                return False        
+            else:
+                pass
+
         else:
-            pass
+            # 選択肢が縦に並べられている場合                
+            if key == keyboard.Key.up:
+                # 一つ前の選択肢へ
+                self.position = self.fix_position(self.position - 1)
+                self.confirmed = False
+                return False
+            
+            elif key == keyboard.Key.down:
+                # 次の選択肢へ
+                self.position = self.fix_position(self.position + 1)
+                self.confirmed = False
+                return False
+            
+            elif key == keyboard.Key.left:
+                # 最初の選択肢へ
+                self.position = 0
+                self.cofirmed = False
+                return False
+
+            elif key == keyboard.Key.right:
+                # 最後の選択肢へ
+                self.position = len(self.choices_tmp) - 1
+                self.confirmed = False
+                return False
+
+            elif key == keyboard.Key.enter:
+                # 確定
+                self.choice = self.position
+                self.confirmed = True
+                # SelectMenu表示後、input()で入力を受けようとするとエンターが入力されてしまうため 
+                input()
+                return False        
+            else:
+                pass
 
     def press_confirm(self, key):
         if (key == keyboard.Key.right) or (key == keyboard.Key.left):
